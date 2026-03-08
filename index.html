@@ -1,484 +1,378 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>F1 Family League 2026</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.8.0/Recharts.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet"/>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { background: #080808; color: #fff; min-height: 100vh; }
-    ::-webkit-scrollbar { width: 3px; }
-    ::-webkit-scrollbar-thumb { background: #E8002D; border-radius: 2px; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
-    @keyframes spin { to { transform: rotate(360deg); } }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html,body{background:#080808;color:#fff;min-height:100vh;font-family:'Barlow',sans-serif}
+    ::-webkit-scrollbar{width:3px}
+    ::-webkit-scrollbar-thumb{background:#E8002D;border-radius:2px}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+    .fade{animation:fadeUp .3s ease}
+    .bc{font-family:'Barlow Condensed',sans-serif}
+    .card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:16px 18px;margin-bottom:8px}
+    .tab{background:none;border:none;cursor:pointer;padding:10px 18px;font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.35);border-bottom:2px solid transparent;transition:all .2s}
+    .tab.active{color:#fff;font-weight:700;border-bottom:2px solid #E8002D}
+    .row{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:14px 18px;margin-bottom:8px;transition:all .2s}
+    .row.top{background:rgba(232,0,45,.08);border-color:rgba(232,0,45,.3)}
+    .avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:16px;flex-shrink:0}
+    .round-header{padding:14px 18px;cursor:pointer;display:flex;align-items:center;gap:14px;user-select:none}
+    .round-body{padding:0 18px 16px;border-top:1px solid rgba(255,255,255,.07)}
+    .score-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;padding-top:14px}
+    .score-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px 14px;display:flex;align-items:center;gap:10px}
+    .dim{color:rgba(255,255,255,.35);font-size:11px}
   </style>
 </head>
 <body>
-  <div id="root"></div>
 
-  <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
-    const { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } = Recharts;
+<div id="app">
+  <div style="text-align:center;padding:100px 20px">
+    <div style="font-size:52px;animation:pulse 1.4s infinite;margin-bottom:16px">🏎️</div>
+    <div class="bc" style="font-size:15px;letter-spacing:3px;color:rgba(255,255,255,.4)">LOADING RACE DATA</div>
+  </div>
+</div>
 
-    // ─── SEASON ────────────────────────────────────────────────────────────────
-    const YEAR = 2026;
+<script>
+// ─── CONFIG ──────────────────────────────────────────────────────────────────
+const YEAR = 2026;
 
-    // ─── FAMILY PICKS ──────────────────────────────────────────────────────────
-    const FAMILY = [
-      { name:"Mark",  avatar:"M", constructor:"red_bull",  constructorLabel:"Red Bull",  color:"#3B82F6",
-        drivers:["piastri","lawson"],           driverLabels:["O. Piastri","L. Lawson"] },
-      { name:"Heidi", avatar:"H", constructor:"mercedes",  constructorLabel:"Mercedes",  color:"#2DD4BF",
-        drivers:["russell","lawson"],           driverLabels:["G. Russell","L. Lawson"] },
-      { name:"Sofia", avatar:"S", constructor:"mercedes",  constructorLabel:"Mercedes",  color:"#F97316",
-        drivers:["norris","antonelli"],         driverLabels:["L. Norris","K. Antonelli"] },
-      { name:"Taryn", avatar:"T", constructor:"ferrari",   constructorLabel:"Ferrari",   color:"#E8002D",
-        drivers:["max_verstappen","bottas"],    driverLabels:["M. Verstappen","V. Bottas"] },
-      { name:"Tim",   avatar:"Ti",constructor:"mercedes",  constructorLabel:"Mercedes",  color:"#A855F7",
-        drivers:["hamilton","antonelli"],       driverLabels:["L. Hamilton","K. Antonelli"] },
-      { name:"Zoe",   avatar:"Z", constructor:"mercedes",  constructorLabel:"Mercedes",  color:"#FBBF24",
-        drivers:["hadjar","max_verstappen"],    driverLabels:["I. Hadjar","M. Verstappen"] },
-    ];
+const FAMILY = [
+  { name:"Mark",  av:"M",  color:"#3B82F6", con:"red_bull",  conLabel:"Red Bull",
+    drivers:["piastri","lawson"],           dl:["O. Piastri","L. Lawson"] },
+  { name:"Heidi", av:"H",  color:"#2DD4BF", con:"mercedes",  conLabel:"Mercedes",
+    drivers:["russell","lawson"],           dl:["G. Russell","L. Lawson"] },
+  { name:"Sofia", av:"S",  color:"#F97316", con:"mercedes",  conLabel:"Mercedes",
+    drivers:["norris","antonelli"],         dl:["L. Norris","K. Antonelli"] },
+  { name:"Taryn", av:"T",  color:"#E8002D", con:"ferrari",   conLabel:"Ferrari",
+    drivers:["max_verstappen","bottas"],    dl:["M. Verstappen","V. Bottas"] },
+  { name:"Tim",   av:"Ti", color:"#A855F7", con:"mercedes",  conLabel:"Mercedes",
+    drivers:["hamilton","antonelli"],       dl:["L. Hamilton","K. Antonelli"] },
+  { name:"Zoe",   av:"Z",  color:"#FBBF24", con:"mercedes",  conLabel:"Mercedes",
+    drivers:["hadjar","max_verstappen"],    dl:["I. Hadjar","M. Verstappen"] },
+];
 
-    const CONSTRUCTOR_COLORS = {
-      red_bull:"#3671C6", mercedes:"#27F4D2", ferrari:"#E8002D",
-      mclaren:"#FF8000", aston_martin:"#358C75", alpine:"#FF87BC",
-      williams:"#64C4FF", rb:"#6692FF", kick_sauber:"#52E252", haas:"#B6BABD",
-    };
+const CON_COLORS = {
+  red_bull:"#3671C6",mercedes:"#27F4D2",ferrari:"#E8002D",
+  mclaren:"#FF8000",aston_martin:"#358C75",alpine:"#FF87BC",
+  williams:"#64C4FF",rb:"#6692FF",kick_sauber:"#52E252",haas:"#B6BABD",
+};
 
-    // ─── SCORING ───────────────────────────────────────────────────────────────
-    function posToPoints(pos) {
-      const p = parseInt(pos, 10);
-      return (!isNaN(p) && p >= 1 && p <= 20) ? 21 - p : 0;
+const FLAGS = {
+  Australia:"🇦🇺",Bahrain:"🇧🇭","Saudi Arabia":"🇸🇦",Japan:"🇯🇵",China:"🇨🇳",
+  "United States":"🇺🇸",Italy:"🇮🇹",Monaco:"🇲🇨",Spain:"🇪🇸",Canada:"🇨🇦",
+  Austria:"🇦🇹","United Kingdom":"🇬🇧",Hungary:"🇭🇺",Belgium:"🇧🇪",
+  Netherlands:"🇳🇱",Singapore:"🇸🇬",Azerbaijan:"🇦🇿",Mexico:"🇲🇽",
+  Brazil:"🇧🇷",Qatar:"🇶🇦","Abu Dhabi":"🇦🇪",USA:"🇺🇸",UK:"🇬🇧",
+};
+const flag = c => FLAGS[c] || "🏁";
+const MEDALS = ["#FFD700","#C0C0C0","#CD7F32"];
+const rankCol = i => MEDALS[i] || "rgba(255,255,255,.25)";
+
+// ─── SCORING ─────────────────────────────────────────────────────────────────
+function posPts(pos){ const p=parseInt(pos);return (!isNaN(p)&&p>=1&&p<=20)?21-p:0; }
+
+function findPts(dId, byDriver){
+  if(byDriver[dId]!==undefined) return byDriver[dId];
+  const s=dId.split("_").pop().toLowerCase();
+  for(const [id,pts] of Object.entries(byDriver)){
+    if(id.toLowerCase()===s||id.toLowerCase().endsWith("_"+s)) return pts;
+  }
+  return 0;
+}
+
+function scoreRace(results){
+  const byD={}, byC={};
+  for(const r of results){
+    byD[r.Driver.driverId]=posPts(r.position);
+    const c=r.Constructor.constructorId;
+    if(!byC[c]) byC[c]=[];
+    byC[c].push(posPts(r.position));
+  }
+  return FAMILY.map(m=>{
+    const d1=findPts(m.drivers[0],byD);
+    const d2=findPts(m.drivers[1],byD);
+    const cp=byC[m.con]||[];
+    const con=cp.reduce((s,p)=>s+p,0)/2;
+    return {name:m.name,d1,d2,con,total:d1+d2+con};
+  });
+}
+
+// ─── FETCH ───────────────────────────────────────────────────────────────────
+async function loadData(){
+  const base=`https://api.jolpi.ca/ergast/f1/${YEAR}`;
+  const sched=await fetch(`${base}/races.json`).then(r=>r.json());
+  const races=sched.MRData?.RaceTable?.Races||[];
+  const now=new Date();
+  const done=races.filter(r=>new Date(r.date)<now);
+  const rounds=await Promise.all(done.map(async race=>{
+    try{
+      const d=await fetch(`${base}/${race.round}/results.json`).then(r=>r.json());
+      const res=d.MRData?.RaceTable?.Races?.[0]?.Results||[];
+      return {race,results:res,scores:scoreRace(res)};
+    }catch{ return {race,results:[],scores:scoreRace([])}; }
+  }));
+  return rounds;
+}
+
+// ─── STATE ───────────────────────────────────────────────────────────────────
+let rounds=[], activeTab="leaderboard", openRound=null;
+
+function getTotals(){
+  return FAMILY.map(m=>({
+    ...m,
+    total:rounds.reduce((s,r)=>s+(r.scores.find(sc=>sc.name===m.name)?.total||0),0)
+  })).sort((a,b)=>b.total-a.total);
+}
+
+// ─── CHART (SVG) ─────────────────────────────────────────────────────────────
+function buildChart(){
+  if(!rounds.length) return `
+    <div style="text-align:center;padding:60px 0;color:rgba(255,255,255,.3)">
+      <div style="font-size:36px;margin-bottom:10px">📈</div>
+      <div class="bc" style="font-size:14px;letter-spacing:2px">CHART WILL POPULATE AFTER RACE 1</div>
+    </div>`;
+
+  const W=800, H=280, PL=44, PR=16, PT=12, PB=32;
+  const cW=W-PL-PR, cH=H-PT-PB;
+
+  // cumulative data
+  const cum={};
+  FAMILY.forEach(m=>cum[m.name]=0);
+  const points=rounds.map(r=>{
+    const e={label:`R${r.race.round}`};
+    r.scores.forEach(s=>{cum[s.name]=(cum[s.name]||0)+s.total;e[s.name]=cum[s.name];});
+    return e;
+  });
+
+  const allVals=Object.values(cum);
+  const maxV=Math.max(...allVals,1);
+  const xs=i=>PL+i*(cW/(rounds.length-1||1));
+  const ys=v=>PT+cH-(v/maxV)*cH;
+
+  let svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto">`;
+
+  // grid lines
+  for(let i=0;i<=4;i++){
+    const y=PT+(cH/4)*i;
+    const val=Math.round(maxV-(maxV/4)*i);
+    svg+=`<line x1="${PL}" y1="${y}" x2="${W-PR}" y2="${y}" stroke="rgba(255,255,255,.07)" stroke-dasharray="3 5"/>`;
+    svg+=`<text x="${PL-4}" y="${y+4}" text-anchor="end" fill="rgba(255,255,255,.3)" font-size="9" font-family="Barlow Condensed">${val}</text>`;
+  }
+
+  // x labels
+  rounds.forEach((r,i)=>{
+    svg+=`<text x="${xs(i)}" y="${H-2}" text-anchor="middle" fill="rgba(255,255,255,.3)" font-size="9" font-family="Barlow Condensed">R${r.race.round}</text>`;
+  });
+
+  // lines per member
+  FAMILY.forEach(m=>{
+    const pts=points.map(p=>p[m.name]||0);
+    if(rounds.length===1){
+      svg+=`<circle cx="${xs(0)}" cy="${ys(pts[0])}" r="4" fill="${m.color}"/>`;
+    } else {
+      let d=`M${xs(0)},${ys(pts[0])}`;
+      for(let i=1;i<pts.length;i++) d+=` L${xs(i)},${ys(pts[i])}`;
+      svg+=`<path d="${d}" fill="none" stroke="${m.color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+      pts.forEach((v,i)=>{ svg+=`<circle cx="${xs(i)}" cy="${ys(v)}" r="3.5" fill="${m.color}"/>`; });
+    }
+    // end label
+    const lastV=pts[pts.length-1];
+    svg+=`<text x="${xs(pts.length-1)+6}" y="${ys(lastV)+4}" fill="${m.color}" font-size="10" font-family="Barlow Condensed" font-weight="700">${m.name}</text>`;
+  });
+
+  svg+=`</svg>`;
+  return svg;
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function render(){
+  const totals=getTotals();
+  const latest=rounds[rounds.length-1];
+
+  let html=`
+  <!-- BG -->
+  <div style="position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.012) 0,rgba(255,255,255,.012) 1px,transparent 1px,transparent 8px),
+    repeating-linear-gradient(-45deg,rgba(255,255,255,.012) 0,rgba(255,255,255,.012) 1px,transparent 1px,transparent 8px)"></div>
+  <div style="position:fixed;top:-120px;left:50%;transform:translateX(-50%);width:700px;height:240px;border-radius:50%;
+    background:radial-gradient(ellipse,rgba(232,0,45,.14) 0%,transparent 70%);pointer-events:none;z-index:0"></div>
+
+  <!-- HEADER -->
+  <div style="position:sticky;top:0;z-index:100;background:rgba(8,8,8,.93);backdrop-filter:blur(24px);border-bottom:1px solid rgba(232,0,45,.2)">
+    <div style="max-width:900px;margin:0 auto;padding:0 16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding-top:18px">
+        <div>
+          <div class="bc" style="font-weight:900;font-size:28px;line-height:1">
+            <span style="color:#E8002D">F1</span><span style="color:#fff;margin-left:8px">FAMILY LEAGUE</span>
+          </div>
+          <div class="dim" style="margin-top:3px;letter-spacing:.5px">
+            ${rounds.length===0 ? YEAR+' Season — Season kicks off soon' : rounds.length+' race'+(rounds.length>1?'s':'')+' complete · '+YEAR+' Season'}
+          </div>
+        </div>
+        <div class="bc" style="font-weight:700;font-size:11px;letter-spacing:2px;color:#E8002D;background:rgba(232,0,45,.12);border:1px solid rgba(232,0,45,.25);border-radius:20px;padding:4px 12px">
+          ${YEAR} SEASON
+        </div>
+      </div>
+      <div style="display:flex;margin-top:10px">
+        <button class="tab ${activeTab==='leaderboard'?'active':''}" onclick="switchTab('leaderboard')">Standings</button>
+        <button class="tab ${activeTab==='rounds'?'active':''}" onclick="switchTab('rounds')">Rounds</button>
+        <button class="tab ${activeTab==='chart'?'active':''}" onclick="switchTab('chart')">Chart</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div style="max-width:900px;margin:0 auto;padding:20px 16px 60px;position:relative;z-index:1" class="fade">`;
+
+  // ── STANDINGS ──
+  if(activeTab==='leaderboard'){
+    if(rounds.length===0){
+      html+=`<div style="background:linear-gradient(135deg,rgba(232,0,45,.1),rgba(232,0,45,.03));border:1px solid rgba(232,0,45,.25);border-radius:14px;padding:20px 22px;margin-bottom:22px;text-align:center">
+        <div style="font-size:36px;margin-bottom:10px">🏁</div>
+        <div class="bc" style="font-weight:800;font-size:20px;margin-bottom:6px">Season Starting — Engines Ready</div>
+        <div class="dim" style="font-size:13px">Standings populate automatically after each race weekend</div>
+      </div>`;
     }
 
-    function findDriverPts(driverId, byDriver) {
-      if (byDriver[driverId] !== undefined) return byDriver[driverId];
-      const surname = driverId.split("_").pop().toLowerCase();
-      for (const [id, pts] of Object.entries(byDriver)) {
-        if (id.toLowerCase() === surname || id.toLowerCase().endsWith("_" + surname)) return pts;
-      }
-      return 0;
+    if(latest){
+      const rWinner=[...latest.scores].sort((a,b)=>b.total-a.total)[0];
+      const wColor=FAMILY.find(f=>f.name===rWinner?.name)?.color||'#fff';
+      html+=`<div style="background:linear-gradient(135deg,rgba(232,0,45,.1),rgba(232,0,45,.03));border:1px solid rgba(232,0,45,.25);border-radius:14px;padding:14px 18px;margin-bottom:20px;display:flex;align-items:center;gap:14px">
+        <div style="font-size:26px">${flag(latest.race.Circuit?.Location?.country)}</div>
+        <div style="flex:1"><div class="bc" style="font-weight:700;font-size:16px">${latest.race.raceName}</div>
+          <div class="dim" style="margin-top:2px">Round ${latest.race.round} · ${latest.race.date}</div></div>
+        ${rWinner?`<div style="text-align:right"><div class="bc" style="font-weight:800;font-size:18px;color:${wColor}">🏆 ${rWinner.name}</div>
+          <div class="dim">Top scorer · ${rWinner.total.toFixed(1)} pts</div></div>`:''}
+      </div>`;
     }
 
-    function scoreRace(results) {
-      const byDriver = {}, byConstructor = {};
-      for (const r of results) {
-        byDriver[r.Driver.driverId] = posToPoints(r.position);
-        const cId = r.Constructor.constructorId;
-        if (!byConstructor[cId]) byConstructor[cId] = [];
-        byConstructor[cId].push(posToPoints(r.position));
-      }
-      return FAMILY.map(m => {
-        const d1 = findDriverPts(m.drivers[0], byDriver);
-        const d2 = findDriverPts(m.drivers[1], byDriver);
-        const cDrivers = byConstructor[m.constructor] || [];
-        const con = cDrivers.reduce((s,p) => s+p, 0) / 2;
-        return { name:m.name, d1, d2, con, total: d1+d2+con };
+    totals.forEach((m,i)=>{
+      const gap=i===0?0:totals[0].total-m.total;
+      const conColor=CON_COLORS[m.con]||'#aaa';
+      html+=`<div class="row${i===0?' top':''}">
+        <div class="bc" style="font-weight:900;font-size:${i===0?30:22}px;color:${rankCol(i)};width:34px;text-align:center;flex-shrink:0">${i+1}</div>
+        <div class="avatar bc" style="background:${m.color}18;border:2px solid ${m.color}55;color:${m.color}">${m.av}</div>
+        <div style="flex:1;min-width:0">
+          <div class="bc" style="font-weight:700;font-size:20px">${m.name}</div>
+          <div class="dim" style="margin-top:2px;display:flex;gap:6px;flex-wrap:wrap">
+            <span>${m.dl[0]}</span><span style="color:rgba(255,255,255,.18)">·</span>
+            <span>${m.dl[1]}</span><span style="color:rgba(255,255,255,.18)">·</span>
+            <span style="color:${conColor}">${m.conLabel}</span>
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="bc" style="font-weight:800;font-size:${i===0?32:24}px;line-height:1;color:#fff">${m.total.toFixed(1)}</div>
+          <div class="dim" style="font-size:10px;letter-spacing:.5px;text-transform:uppercase;margin-top:2px">${gap>0?'-'+gap.toFixed(1):'LEADER'}</div>
+        </div>
+      </div>`;
+    });
+
+    html+=`<div class="card" style="margin-top:16px">
+      <div class="bc" style="font-weight:700;font-size:12px;letter-spacing:1px;color:rgba(255,255,255,.45);margin-bottom:8px">SCORING RULES</div>
+      <div style="font-size:12px;color:rgba(255,255,255,.4);line-height:1.9">
+        <b style="color:rgba(255,255,255,.7)">Drivers:</b> 1st=20, 2nd=19 … 20th=1pt &nbsp;·&nbsp;
+        <b style="color:rgba(255,255,255,.7)">Constructor:</b> Both drivers' points added then halved &nbsp;·&nbsp;
+        <b style="color:rgba(255,255,255,.7)">Weekly:</b> D1 + D2 + (Constructor÷2)
+      </div>
+    </div>`;
+  }
+
+  // ── ROUNDS ──
+  if(activeTab==='rounds'){
+    if(rounds.length===0){
+      html+=`<div style="text-align:center;padding:80px 0;color:rgba(255,255,255,.3)">
+        <div style="font-size:40px;margin-bottom:12px">🏎️</div>
+        <div class="bc" style="font-size:16px;letter-spacing:2px">NO RACES COMPLETED YET</div>
+        <div class="dim" style="margin-top:8px;font-size:12px">Check back after the first race weekend</div>
+      </div>`;
+    } else {
+      [...rounds].reverse().forEach(r=>{
+        const key=r.race.round;
+        const isOpen=openRound===key;
+        const sorted=[...r.scores].sort((a,b)=>b.total-a.total);
+        const winner=sorted[0];
+        const wColor=FAMILY.find(f=>f.name===winner?.name)?.color||'#fff';
+        html+=`<div style="background:rgba(255,255,255,.04);border:1px solid ${isOpen?'rgba(232,0,45,.35)':'rgba(255,255,255,.07)'};border-radius:14px;overflow:hidden;margin-bottom:8px">
+          <div class="round-header" onclick="toggleRound('${key}')">
+            <div style="font-size:26px">${flag(r.race.Circuit?.Location?.country)}</div>
+            <div style="flex:1">
+              <div class="bc" style="font-weight:700;font-size:17px">${r.race.raceName}</div>
+              <div class="dim" style="margin-top:2px">Round ${r.race.round} · ${r.race.date}</div>
+            </div>
+            ${winner?`<div style="text-align:right">
+              <div class="bc" style="font-weight:700;font-size:14px;color:${wColor}">🏆 ${winner.name}</div>
+              <div class="dim">${winner.total.toFixed(1)} pts</div>
+            </div>`:''}
+            <div style="color:rgba(255,255,255,.3);font-size:11px;margin-left:4px">${isOpen?'▲':'▼'}</div>
+          </div>`;
+        if(isOpen){
+          html+=`<div class="round-body"><div class="score-grid">`;
+          sorted.forEach((s,idx)=>{
+            const col=FAMILY.find(f=>f.name===s.name)?.color||'#fff';
+            const av=FAMILY.find(f=>f.name===s.name)?.av||s.name[0];
+            html+=`<div class="score-card">
+              <div class="bc" style="font-weight:800;font-size:18px;color:${rankCol(idx)};width:22px;flex-shrink:0">${idx+1}</div>
+              <div style="width:32px;height:32px;border-radius:50%;background:${col}18;border:1.5px solid ${col}50;
+                display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;
+                font-weight:800;font-size:12px;color:${col};flex-shrink:0">${av}</div>
+              <div style="flex:1">
+                <div class="bc" style="font-weight:700;font-size:16px">${s.name}</div>
+                <div class="dim" style="font-size:10px;margin-top:1px">D1:${s.d1} + D2:${s.d2} + Con:${s.con.toFixed(1)}</div>
+              </div>
+              <div class="bc" style="font-weight:800;font-size:22px;color:#fff">${s.total.toFixed(1)}</div>
+            </div>`;
+          });
+          html+=`</div></div>`;
+        }
+        html+=`</div>`;
       });
     }
+  }
 
-    // ─── DATA FETCH ────────────────────────────────────────────────────────────
-    async function loadSeason() {
-      const base = `https://api.jolpi.ca/ergast/f1/${YEAR}`;
-      const sched = await fetch(`${base}/races.json`).then(r => r.json());
-      const races  = sched.MRData?.RaceTable?.Races || [];
-      const now    = new Date();
-      const done   = races.filter(r => new Date(r.date) < now);
-      const rounds = await Promise.all(done.map(async race => {
-        try {
-          const d = await fetch(`${base}/${race.round}/results.json`).then(r => r.json());
-          const results = d.MRData?.RaceTable?.Races?.[0]?.Results || [];
-          return { race, results, scores: scoreRace(results) };
-        } catch { return { race, results:[], scores:scoreRace([]) }; }
-      }));
-      return rounds;
-    }
+  // ── CHART ──
+  if(activeTab==='chart'){
+    html+=`<div class="card" style="margin-bottom:16px">
+      <div class="bc" style="font-weight:700;font-size:15px;letter-spacing:1px;margin-bottom:16px;color:rgba(255,255,255,.8)">CUMULATIVE POINTS — ${YEAR} SEASON</div>
+      ${buildChart()}
+    </div>`;
 
-    // ─── HELPERS ───────────────────────────────────────────────────────────────
-    const FLAGS = {
-      Australia:"🇦🇺",Bahrain:"🇧🇭","Saudi Arabia":"🇸🇦",Japan:"🇯🇵",China:"🇨🇳",
-      "United States":"🇺🇸",Italy:"🇮🇹",Monaco:"🇲🇨",Spain:"🇪🇸",Canada:"🇨🇦",
-      Austria:"🇦🇹","United Kingdom":"🇬🇧",Hungary:"🇭🇺",Belgium:"🇧🇪",
-      Netherlands:"🇳🇱",Singapore:"🇸🇬",Azerbaijan:"🇦🇿",Mexico:"🇲🇽",
-      Brazil:"🇧🇷",Qatar:"🇶🇦","Abu Dhabi":"🇦🇪",USA:"🇺🇸",UK:"🇬🇧",
-    };
-    const flag = c => FLAGS[c] || "🏁";
+    const totalsForLegend=getTotals();
+    html+=`<div class="card" style="display:flex;flex-wrap:wrap;gap:12px">`;
+    totalsForLegend.forEach(m=>{
+      html+=`<div style="display:flex;align-items:center;gap:7px">
+        <div style="width:10px;height:10px;border-radius:50%;background:${m.color}"></div>
+        <span class="bc" style="font-weight:600;font-size:15px;color:rgba(255,255,255,.75)">${m.name}</span>
+        <span class="bc" style="font-size:13px;color:rgba(255,255,255,.35)">${m.total.toFixed(1)}</span>
+      </div>`;
+    });
+    html+=`</div>`;
+  }
 
-    const MEDALS = ["#FFD700","#C0C0C0","#CD7F32"];
-    const rankColor = i => MEDALS[i] || "rgba(255,255,255,0.2)";
+  html+=`</div>`;
+  document.getElementById('app').innerHTML=html;
+}
 
-    // ─── TOOLTIP ───────────────────────────────────────────────────────────────
-    function ChartTip({ active, payload, label }) {
-      if (!active || !payload?.length) return null;
-      const sorted = [...payload].sort((a,b) => b.value - a.value);
-      return (
-        <div style={{background:"rgba(10,10,10,0.96)",border:"1px solid rgba(232,0,45,0.3)",
-          borderRadius:12,padding:"12px 16px",fontFamily:"'Barlow Condensed',sans-serif"}}>
-          <div style={{color:"#E8002D",fontWeight:700,fontSize:13,letterSpacing:1,marginBottom:8}}>{label}</div>
-          {sorted.map(s => (
-            <div key={s.name} style={{display:"flex",justifyContent:"space-between",gap:16,marginBottom:3}}>
-              <span style={{color:s.color,fontWeight:600,fontSize:14}}>{s.name}</span>
-              <span style={{color:"#fff",fontWeight:700,fontSize:14}}>{Number(s.value).toFixed(1)} pts</span>
-            </div>
-          ))}
-        </div>
-      );
-    }
+// ─── INTERACTIONS ────────────────────────────────────────────────────────────
+function switchTab(t){ activeTab=t; render(); }
+function toggleRound(key){ openRound=openRound===key?null:key; render(); }
 
-    // ─── APP ───────────────────────────────────────────────────────────────────
-    function App() {
-      const [tab, setTab]           = useState("leaderboard");
-      const [rounds, setRounds]     = useState([]);
-      const [loading, setLoading]   = useState(true);
-      const [error, setError]       = useState(null);
-      const [open, setOpen]         = useState(null);
-
-      useEffect(() => {
-        loadSeason()
-          .then(d => { setRounds(d); setLoading(false); })
-          .catch(e => { setError(e.message); setLoading(false); });
-      }, []);
-
-      // Season totals
-      const totals = FAMILY.map(m => ({
-        ...m,
-        total: rounds.reduce((sum, r) => sum + (r.scores.find(s => s.name===m.name)?.total || 0), 0),
-      })).sort((a,b) => b.total - a.total);
-
-      // Chart: cumulative
-      const chartData = (() => {
-        const cum = {};
-        FAMILY.forEach(m => cum[m.name] = 0);
-        return rounds.map(r => {
-          const e = { label:`R${r.race.round} ${flag(r.race.Circuit?.Location?.country)}` };
-          r.scores.forEach(s => { cum[s.name] = (cum[s.name]||0)+s.total; e[s.name] = Math.round(cum[s.name]*10)/10; });
-          return e;
-        });
-      })();
-
-      const latest = rounds[rounds.length-1];
-      const leader = totals[0];
-
-      // ── Styles ──────────────────────────────────────────────────────────────
-      const S = {
-        root: { minHeight:"100vh", background:"#080808", fontFamily:"'Barlow',sans-serif", color:"#fff", position:"relative" },
-        bg1:  { position:"fixed",inset:0,pointerEvents:"none",zIndex:0,
-                backgroundImage:"repeating-linear-gradient(45deg,rgba(255,255,255,.012) 0,rgba(255,255,255,.012) 1px,transparent 1px,transparent 8px),repeating-linear-gradient(-45deg,rgba(255,255,255,.012) 0,rgba(255,255,255,.012) 1px,transparent 1px,transparent 8px)" },
-        bg2:  { position:"fixed",top:-120,left:"50%",transform:"translateX(-50%)",width:700,height:240,borderRadius:"50%",
-                background:"radial-gradient(ellipse,rgba(232,0,45,.14) 0%,transparent 70%)",pointerEvents:"none",zIndex:0 },
-        header:{ position:"sticky",top:0,zIndex:100,background:"rgba(8,8,8,.93)",backdropFilter:"blur(24px)",
-                 borderBottom:"1px solid rgba(232,0,45,.2)" },
-        inner: { maxWidth:900,margin:"0 auto",padding:"0 16px" },
-        main:  { maxWidth:900,margin:"0 auto",padding:"20px 16px 60px",position:"relative",zIndex:1 },
-        card:  { background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,255,255,.08)",borderRadius:14,padding:"16px 18px",marginBottom:8 },
-        pill:  { fontFamily:"'Barlow Condensed',sans-serif",fontWeight:700,fontSize:11,letterSpacing:2,color:"#E8002D",
-                 background:"rgba(232,0,45,.12)",border:"1px solid rgba(232,0,45,.25)",borderRadius:20,padding:"4px 12px" },
-        dim:   { color:"rgba(255,255,255,.35)",fontSize:11 },
-        bc:    { fontFamily:"'Barlow Condensed',sans-serif" },
-      };
-
-      return (
-        <div style={S.root}>
-          <div style={S.bg1} />
-          <div style={S.bg2} />
-
-          {/* ── HEADER ── */}
-          <div style={S.header}>
-            <div style={S.inner}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",paddingTop:18}}>
-                <div>
-                  <div style={{...S.bc,fontWeight:900,fontSize:28,lineHeight:1}}>
-                    <span style={{color:"#E8002D"}}>F1</span>
-                    <span style={{color:"#fff",marginLeft:8}}>FAMILY LEAGUE</span>
-                  </div>
-                  <div style={{...S.dim,marginTop:3,letterSpacing:.5}}>
-                    {loading ? "Fetching race data…" : rounds.length===0
-                      ? `${YEAR} Season — Races yet to begin`
-                      : `${rounds.length} race${rounds.length>1?"s":""} complete · ${YEAR} Season`}
-                  </div>
-                </div>
-                <div style={S.pill}>{YEAR} SEASON</div>
-              </div>
-
-              {/* Tabs */}
-              <div style={{display:"flex",marginTop:10}}>
-                {[["leaderboard","Standings"],["rounds","Rounds"],["chart","Chart"]].map(([id,label]) => (
-                  <button key={id} onClick={() => setTab(id)} style={{
-                    background:"none",border:"none",cursor:"pointer",padding:"10px 18px",
-                    fontFamily:"'Barlow Condensed',sans-serif",fontWeight:tab===id?700:500,
-                    fontSize:13,letterSpacing:1,textTransform:"uppercase",
-                    color:tab===id?"#fff":"rgba(255,255,255,.35)",
-                    borderBottom:tab===id?"2px solid #E8002D":"2px solid transparent",transition:"all .2s",
-                  }}>{label}</button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* ── MAIN ── */}
-          <div style={S.main}>
-
-            {/* Loading */}
-            {loading && (
-              <div style={{textAlign:"center",padding:"100px 0"}}>
-                <div style={{fontSize:52,animation:"pulse 1.4s infinite",marginBottom:16}}>🏎️</div>
-                <div style={{...S.bc,fontSize:15,letterSpacing:3,color:"rgba(255,255,255,.4)"}}>LOADING RACE DATA</div>
-              </div>
-            )}
-
-            {/* Error */}
-            {error && (
-              <div style={{textAlign:"center",padding:60,color:"#E8002D"}}>
-                <div style={{fontSize:36,marginBottom:12}}>⚠️</div>
-                <div style={{...S.bc,fontSize:18}}>Failed to load data</div>
-                <div style={{...S.dim,marginTop:8}}>{error}</div>
-              </div>
-            )}
-
-            {/* ── STANDINGS ── */}
-            {!loading && !error && tab==="leaderboard" && (
-              <div style={{animation:"fadeUp .3s ease"}}>
-
-                {/* Season hasn't started message */}
-                {rounds.length === 0 && (
-                  <div style={{
-                    background:"linear-gradient(135deg,rgba(232,0,45,.1),rgba(232,0,45,.03))",
-                    border:"1px solid rgba(232,0,45,.25)",borderRadius:14,
-                    padding:"20px 22px",marginBottom:22,textAlign:"center",
-                  }}>
-                    <div style={{fontSize:36,marginBottom:10}}>🏁</div>
-                    <div style={{...S.bc,fontWeight:800,fontSize:20,marginBottom:6}}>Season Starting — Engines Ready</div>
-                    <div style={{...S.dim,fontSize:13}}>
-                      The {YEAR} season is underway. Standings will populate automatically after each race weekend.
-                    </div>
-                  </div>
-                )}
-
-                {/* Latest race banner */}
-                {latest && (
-                  <div style={{
-                    background:"linear-gradient(135deg,rgba(232,0,45,.1),rgba(232,0,45,.03))",
-                    border:"1px solid rgba(232,0,45,.25)",borderRadius:14,
-                    padding:"14px 18px",marginBottom:20,
-                    display:"flex",alignItems:"center",gap:14,
-                  }}>
-                    <div style={{fontSize:26}}>{flag(latest.race.Circuit?.Location?.country)}</div>
-                    <div style={{flex:1}}>
-                      <div style={{...S.bc,fontWeight:700,fontSize:16}}>{latest.race.raceName}</div>
-                      <div style={{...S.dim,marginTop:2}}>Round {latest.race.round} · {latest.race.date}</div>
-                    </div>
-                    {(() => {
-                      const w = [...latest.scores].sort((a,b)=>b.total-a.total)[0];
-                      return w ? (
-                        <div style={{textAlign:"right"}}>
-                          <div style={{...S.bc,fontWeight:800,fontSize:18,color:FAMILY.find(f=>f.name===w.name)?.color}}>
-                            🏆 {w.name}
-                          </div>
-                          <div style={{...S.dim}}>Top scorer · {w.total.toFixed(1)} pts</div>
-                        </div>
-                      ) : null;
-                    })()}
-                  </div>
-                )}
-
-                {/* Leaderboard rows */}
-                <div>
-                  {totals.map((m, i) => {
-                    const gap   = i===0 ? 0 : totals[0].total - m.total;
-                    const isTop = i===0;
-                    return (
-                      <div key={m.name} style={{
-                        background: isTop ? "rgba(232,0,45,.08)" : "rgba(255,255,255,.04)",
-                        border:`1px solid ${isTop?"rgba(232,0,45,.3)":"rgba(255,255,255,.07)"}`,
-                        borderRadius:14,padding:"14px 18px",marginBottom:8,
-                        display:"flex",alignItems:"center",gap:14,
-                        transition:"all .2s",
-                      }}>
-                        {/* Rank */}
-                        <div style={{...S.bc,fontWeight:900,fontSize:isTop?30:22,
-                          color:rankColor(i),width:34,textAlign:"center",flexShrink:0}}>
-                          {i+1}
-                        </div>
-                        {/* Avatar */}
-                        <div style={{
-                          width:44,height:44,borderRadius:"50%",
-                          background:`${m.color}18`,border:`2px solid ${m.color}55`,
-                          display:"flex",alignItems:"center",justifyContent:"center",
-                          ...S.bc,fontWeight:800,fontSize:16,color:m.color,flexShrink:0,
-                        }}>{m.avatar}</div>
-                        {/* Name + picks */}
-                        <div style={{flex:1,minWidth:0}}>
-                          <div style={{...S.bc,fontWeight:700,fontSize:20}}>{m.name}</div>
-                          <div style={{...S.dim,marginTop:2,display:"flex",gap:6,flexWrap:"wrap",fontSize:11}}>
-                            <span>{m.driverLabels[0]}</span>
-                            <span style={{color:"rgba(255,255,255,.18)"}}>·</span>
-                            <span>{m.driverLabels[1]}</span>
-                            <span style={{color:"rgba(255,255,255,.18)"}}>·</span>
-                            <span style={{color:CONSTRUCTOR_COLORS[m.constructor]||"#aaa"}}>{m.constructorLabel}</span>
-                          </div>
-                        </div>
-                        {/* Score */}
-                        <div style={{textAlign:"right",flexShrink:0}}>
-                          <div style={{...S.bc,fontWeight:800,fontSize:isTop?32:24,lineHeight:1,color:"#fff"}}>
-                            {m.total.toFixed(1)}
-                          </div>
-                          <div style={{...S.dim,fontSize:10,letterSpacing:.5,textTransform:"uppercase",marginTop:2}}>
-                            {gap>0 ? `-${gap.toFixed(1)}` : "LEADER"}
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Scoring key */}
-                <div style={{...S.card,marginTop:16}}>
-                  <div style={{...S.bc,fontWeight:700,fontSize:12,letterSpacing:1,color:"rgba(255,255,255,.45)",marginBottom:8}}>
-                    SCORING RULES
-                  </div>
-                  <div style={{fontSize:12,color:"rgba(255,255,255,.4)",lineHeight:1.9}}>
-                    <b style={{color:"rgba(255,255,255,.7)"}}>Drivers:</b> 1st=20, 2nd=19 … 20th=1pt &nbsp;·&nbsp;
-                    <b style={{color:"rgba(255,255,255,.7)"}}>Constructor:</b> Both drivers' points added and halved &nbsp;·&nbsp;
-                    <b style={{color:"rgba(255,255,255,.7)"}}>Weekly:</b> D1 + D2 + (Con÷2)
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ── ROUNDS ── */}
-            {!loading && !error && tab==="rounds" && (
-              <div style={{animation:"fadeUp .3s ease"}}>
-                {rounds.length===0 ? (
-                  <div style={{textAlign:"center",padding:"80px 0",color:"rgba(255,255,255,.3)"}}>
-                    <div style={{fontSize:40,marginBottom:12}}>🏎️</div>
-                    <div style={{...S.bc,fontSize:16,letterSpacing:2}}>NO RACES COMPLETED YET</div>
-                    <div style={{...S.dim,marginTop:8,fontSize:12}}>Check back after the first race weekend</div>
-                  </div>
-                ) : (
-                  [...rounds].reverse().map(r => {
-                    const key    = r.race.round;
-                    const isOpen = open===key;
-                    const sorted = [...r.scores].sort((a,b)=>b.total-a.total);
-                    const winner = sorted[0];
-                    return (
-                      <div key={key} style={{
-                        background:"rgba(255,255,255,.04)",
-                        border:`1px solid ${isOpen?"rgba(232,0,45,.35)":"rgba(255,255,255,.07)"}`,
-                        borderRadius:14,overflow:"hidden",marginBottom:8,transition:"border-color .2s",
-                      }}>
-                        <div onClick={() => setOpen(isOpen?null:key)} style={{
-                          padding:"14px 18px",cursor:"pointer",display:"flex",alignItems:"center",gap:14,
-                        }}>
-                          <div style={{fontSize:26}}>{flag(r.race.Circuit?.Location?.country)}</div>
-                          <div style={{flex:1}}>
-                            <div style={{...S.bc,fontWeight:700,fontSize:17}}>{r.race.raceName}</div>
-                            <div style={{...S.dim,marginTop:2}}>Round {r.race.round} · {r.race.date}</div>
-                          </div>
-                          {winner && (
-                            <div style={{textAlign:"right"}}>
-                              <div style={{...S.bc,fontWeight:700,fontSize:14,color:FAMILY.find(f=>f.name===winner.name)?.color}}>
-                                🏆 {winner.name}
-                              </div>
-                              <div style={{...S.dim}}>{winner.total.toFixed(1)} pts</div>
-                            </div>
-                          )}
-                          <div style={{color:"rgba(255,255,255,.3)",fontSize:11,marginLeft:4}}>{isOpen?"▲":"▼"}</div>
-                        </div>
-
-                        {isOpen && (
-                          <div style={{padding:"0 18px 16px",borderTop:"1px solid rgba(255,255,255,.07)"}}>
-                            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:8,paddingTop:14}}>
-                              {sorted.map((s,idx) => {
-                                const col = FAMILY.find(f=>f.name===s.name)?.color||"#fff";
-                                const av  = FAMILY.find(f=>f.name===s.name)?.avatar||s.name[0];
-                                return (
-                                  <div key={s.name} style={{
-                                    background:"rgba(255,255,255,.03)",border:"1px solid rgba(255,255,255,.07)",
-                                    borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,
-                                  }}>
-                                    <div style={{...S.bc,fontWeight:800,fontSize:18,color:rankColor(idx),width:22,flexShrink:0}}>{idx+1}</div>
-                                    <div style={{
-                                      width:32,height:32,borderRadius:"50%",background:`${col}18`,border:`1.5px solid ${col}50`,
-                                      display:"flex",alignItems:"center",justifyContent:"center",
-                                      ...S.bc,fontWeight:800,fontSize:12,color:col,flexShrink:0,
-                                    }}>{av}</div>
-                                    <div style={{flex:1}}>
-                                      <div style={{...S.bc,fontWeight:700,fontSize:16}}>{s.name}</div>
-                                      <div style={{...S.dim,fontSize:10,marginTop:1}}>
-                                        D1:{s.d1} + D2:{s.d2} + Con:{s.con.toFixed(1)}
-                                      </div>
-                                    </div>
-                                    <div style={{...S.bc,fontWeight:800,fontSize:22,color:"#fff"}}>{s.total.toFixed(1)}</div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            )}
-
-            {/* ── CHART ── */}
-            {!loading && !error && tab==="chart" && (
-              <div style={{animation:"fadeUp .3s ease"}}>
-                <div style={{...S.card,marginBottom:16}}>
-                  <div style={{...S.bc,fontWeight:700,fontSize:15,letterSpacing:1,marginBottom:16,color:"rgba(255,255,255,.8)"}}>
-                    CUMULATIVE POINTS — {YEAR} SEASON
-                  </div>
-                  {chartData.length===0 ? (
-                    <div style={{textAlign:"center",padding:"60px 0",color:"rgba(255,255,255,.3)"}}>
-                      <div style={{fontSize:36,marginBottom:10}}>📈</div>
-                      <div style={{...S.bc,fontSize:14,letterSpacing:2}}>CHART WILL POPULATE AFTER RACE 1</div>
-                    </div>
-                  ) : (
-                    <ResponsiveContainer width="100%" height={320}>
-                      <LineChart data={chartData} margin={{top:4,right:16,bottom:4,left:0}}>
-                        <CartesianGrid strokeDasharray="2 6" stroke="rgba(255,255,255,.07)" />
-                        <XAxis dataKey="label" tick={{fill:"rgba(255,255,255,.35)",fontSize:11,fontFamily:"'Barlow Condensed'"}}
-                          axisLine={{stroke:"rgba(255,255,255,.1)"}} tickLine={false} />
-                        <YAxis tick={{fill:"rgba(255,255,255,.35)",fontSize:11,fontFamily:"'Barlow Condensed'"}}
-                          axisLine={false} tickLine={false} />
-                        <Tooltip content={<ChartTip />} />
-                        {FAMILY.map(m => (
-                          <Line key={m.name} type="monotone" dataKey={m.name}
-                            stroke={m.color} strokeWidth={2.5}
-                            dot={{r:3,fill:m.color,strokeWidth:0}} activeDot={{r:5}} />
-                        ))}
-                      </LineChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-
-                {/* Legend */}
-                <div style={{...S.card,display:"flex",flexWrap:"wrap",gap:12}}>
-                  {totals.map(m => (
-                    <div key={m.name} style={{display:"flex",alignItems:"center",gap:7}}>
-                      <div style={{width:10,height:10,borderRadius:"50%",background:m.color}} />
-                      <span style={{...S.bc,fontWeight:600,fontSize:15,color:"rgba(255,255,255,.75)"}}>{m.name}</span>
-                      <span style={{...S.bc,fontSize:13,color:"rgba(255,255,255,.35)"}}>{m.total.toFixed(1)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-          </div>
-        </div>
-      );
-    }
-
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-  </script>
+// ─── INIT ────────────────────────────────────────────────────────────────────
+loadData().then(data=>{
+  rounds=data;
+  render();
+}).catch(err=>{
+  document.getElementById('app').innerHTML=`
+    <div style="text-align:center;padding:80px 20px;color:#E8002D">
+      <div style="font-size:36px;margin-bottom:12px">⚠️</div>
+      <div class="bc" style="font-size:18px">Failed to load data</div>
+      <div style="color:rgba(255,255,255,.4);font-size:13px;margin-top:8px">${err.message}</div>
+    </div>`;
+});
+</script>
 </body>
 </html>
